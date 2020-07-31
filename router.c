@@ -24,13 +24,13 @@ typedef struct{
 	__u32 dst_ip;
 	__u16 original_source;
 	int connection_allive;
-	}routing;
+}routing;
 	
 
 typedef struct{
-		__u16 port_arr[32768];
-		int head;
-	}open_ports;
+	__u16 port_arr[32768];
+	int head;
+}open_ports;
 
 		
 static struct nf_hook_ops nfho_pre_routing;
@@ -88,16 +88,17 @@ void print_ip(__u32 ip){
     bytes[1] = (ip >> 8) & 0xFF;
     bytes[2] = (ip >> 16) & 0xFF;
     bytes[3] = (ip >> 24) & 0xFF;   
-    printk(KERN_INFO"%d.%d.%d.%d\n", bytes[0], bytes[1], bytes[2], bytes[3]);        
+    printk(KERN_INFO"%d.%d.%d.%d\n",
+	bytes[0], bytes[1], bytes[2], bytes[3]);        
 }
 	
 	
 int find_original_source_udp(__u16 port,__u32 ip){
 	int i;
 	for(i = 1;i<65536;++i){
-		if(udp_arr[i].dst_ip == ip){
-			if(udp_arr[i].original_source == port)
-				return i;
+		if(udp_arr[i].dst_ip == ip &&
+		udp_arr[i].original_source == port){
+			return i;
 		}
 	}
 	return 0;
@@ -107,9 +108,9 @@ int find_original_source_udp(__u16 port,__u32 ip){
 int find_original_source_tcp(__u16 port, __u32 ip){
 	int i;
 	for(i = 0;i<65536;++i){
-		if(tcp_arr[i].dst_ip == ip){
-			if(tcp_arr[i].original_source == port)
-				return i;
+		if(tcp_arr[i].dst_ip == ip &&
+		tcp_arr[i].original_source == port){
+			return i;
 		}
 	}
 	return 0;
@@ -124,8 +125,9 @@ void update_checksum(struct sk_buff *skb){
 	ip_header->check = 0;
 	ip_header->check = ip_fast_csum((u8 *)ip_header, ip_header->ihl);
 	if ( (ip_header->protocol == IPPROTO_TCP) || (ip_header->protocol == IPPROTO_UDP) ) {
-		if(skb_is_nonlinear(skb))
-        	skb_linearize(skb);  
+		if(skb_is_nonlinear(skb)){
+        	skb_linearize(skb);
+		}
 		if (ip_header->protocol == IPPROTO_TCP) {
 			struct tcphdr *tcpHdr;
         	unsigned int tcplen;
@@ -146,10 +148,13 @@ void update_checksum(struct sk_buff *skb){
 		    skb->csum =0;
 		    udplen = ntohs(ip_header->tot_len) - ip_header->ihl*4;
 		    udpHdr->check = 0;
-		    udpHdr->check = udp_v4_check(udplen,ip_header->saddr, ip_header->daddr,csum_partial((char *)udpHdr, udplen, 0));;
-  }
-
-}}
+		    udpHdr->check = udp_v4_check(udplen,ip_header->saddr,
+										ip_header->daddr,
+										csum_partial((char *)udpHdr,
+										udplen, 0));
+ 		 }
+	}
+}
 
 
 int is_ip(struct sk_buff *sock_buff){
@@ -157,9 +162,7 @@ int is_ip(struct sk_buff *sock_buff){
 	if (!sock_buff) {
         return FALSE;
     }
-
     iph = (struct iphdr *)skb_network_header(sock_buff);
-
     if (!iph) {
         return FALSE;
     }
@@ -178,7 +181,8 @@ int connection_exist_post_tcp(struct sk_buff *sock_buff){
     iph = (struct iphdr *)skb_network_header(sock_buff);
     m_port = find_original_source_tcp(tcph->source, iph->daddr);
     if(m_port != 0 && tcp_arr[m_port].user_ip == iph->saddr){
-    	if( tcp_arr[m_port].original_source == tcph->source && tcp_arr[m_port].dst_ip == iph->daddr){
+    	if( tcp_arr[m_port].original_source == tcph->source &&
+		tcp_arr[m_port].dst_ip == iph->daddr){
     		return TRUE;
     	}
     	else{
@@ -187,7 +191,9 @@ int connection_exist_post_tcp(struct sk_buff *sock_buff){
     }
     else{ 
     	m_port = find_original_source_tcp(tcph->dest, iph->saddr);
-    	if(tcp_arr[m_port].dst_ip == iph->saddr && tcp_arr[m_port].user_ip == iph->daddr && tcp_arr[m_port].original_source == tcph->dest){
+    	if(tcp_arr[m_port].dst_ip == iph->saddr &&
+		tcp_arr[m_port].user_ip == iph->daddr &&
+		tcp_arr[m_port].original_source == tcph->dest){
     		return 2;
     	}
     }
@@ -203,7 +209,8 @@ int connection_exist_post_udp(struct sk_buff *sock_buff){
     iph = (struct iphdr *)skb_network_header(sock_buff);
     m_port = find_original_source_udp(udph->source, iph->daddr);
     if(m_port != 0 && udp_arr[m_port].user_ip == iph->saddr){
-    	if( udp_arr[m_port].original_source == udph->source && udp_arr[m_port].dst_ip == iph->daddr){
+    	if( udp_arr[m_port].original_source == udph->source &&
+		udp_arr[m_port].dst_ip == iph->daddr){
     		return TRUE;
     	}
     	else{
@@ -212,7 +219,9 @@ int connection_exist_post_udp(struct sk_buff *sock_buff){
     }
     else{ 
     	m_port = find_original_source_udp(udph->dest, iph->saddr);
-    	if(udp_arr[m_port].dst_ip == iph->saddr && udp_arr[m_port].user_ip == iph->daddr && udp_arr[m_port].original_source == udph->dest){
+    	if(udp_arr[m_port].dst_ip == iph->saddr &&
+		udp_arr[m_port].user_ip == iph->daddr && 
+		udp_arr[m_port].original_source == udph->dest){
     		return 2;
     	}
     }
@@ -278,10 +287,7 @@ unsigned int post_routing_hook_func(void *priv, struct sk_buff *sock_buff, const
     if (!is_ip(sock_buff)) {
         return NF_ACCEPT;
     }
-
     iph = (struct iphdr *)skb_network_header(sock_buff);
-    
-    
     if(iph->saddr != PUBLIC_IP && iph->daddr != PUBLIC_IP){
     	if(iph->protocol == IPPROTO_TCP){
     		connection_status = connection_exist_post_tcp(sock_buff);
@@ -302,8 +308,8 @@ unsigned int post_routing_hook_func(void *priv, struct sk_buff *sock_buff, const
     			new_connection_udp(sock_buff);
     		}
     		modify_packet_post_udp(sock_buff);
-    }
-    update_checksum(sock_buff);      
+    	}
+    	update_checksum(sock_buff);      
 	}
 	return NF_ACCEPT;  
 }
@@ -384,7 +390,7 @@ unsigned int pre_routing_hook_func(void *priv, struct sk_buff *sock_buff, const 
     			modify_packet_pre_udp(sock_buff);
     		}
     	}
-    update_checksum(sock_buff);
+    	update_checksum(sock_buff);
     }
     return NF_ACCEPT;        
 
@@ -399,8 +405,8 @@ void free_ports(void){
 	tem_port = pop(&udp_in_use);
 	while(tem_port != -1){
 		if(udp_arr[tem_port].connection_allive){
-			 udp_arr[tem_port].connection_allive = FALSE;
-			 push(&tem_udp,tem_port);
+			udp_arr[tem_port].connection_allive = FALSE;
+			push(&tem_udp,tem_port);
 		}
 		else{
 			push(&udp,tem_port);

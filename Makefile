@@ -1,6 +1,4 @@
-    
-     
-
+ccflags-y := -o3
 router2-objs :=	router.o
 obj-m :=	router2.o
 
