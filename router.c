@@ -1,43 +1,13 @@
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/netdevice.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter_ipv4.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <net/tcp.h>
-#include <net/udp.h>
-#include <linux/delay.h>
-#include <linux/kthread.h>
-#define FALSE 0
-#define TRUE !FALSE
-#define swap_endian(num) ((num>>24)&0xff) | ((num<<8)&0xff0000) |((num>>8)&0xff00) | ((num<<24)&0xff000000)
-#define PUBLIC_IP ((__u32)swap_endian(2886994434))
+#include "router.h"
+
 MODULE_LICENSE("Dual BSD/GPL");
-
-
-typedef struct{
-	__u32 user_ip;
-	__u32 dst_ip;
-	__u16 original_source;
-	int connection_allive;
-}routing;
-	
-
-typedef struct{
-	__u16 port_arr[32768];
-	int head;
-}open_ports;
 
 		
 static struct nf_hook_ops nfho_pre_routing;
 static struct nf_hook_ops nfho_post_routing;
 static struct task_struct *kthread;
 routing udp_arr[65536],tcp_arr[65536];
-open_ports udp,tcp,udp_in_use,tcp_in_use, tem_udp,tem_tcp;;
+port_stack udp,tcp,udp_in_use,tcp_in_use, tem_udp,tem_tcp;;
 
 
 void init_routing(routing* r){
@@ -56,7 +26,7 @@ void reset_arr(void){
 	}
 }
 
-int pop(open_ports* stack){
+int pop(port_stack* stack){
 	if(stack->head > -1){
 		stack->head += -1;
 		return stack->port_arr[stack->head ];
@@ -65,13 +35,13 @@ int pop(open_ports* stack){
 }
 
 
-void push(open_ports* stack, __u16 port){
+void push(port_stack* stack, __u16 port){
 	stack->port_arr[stack->head ] = port;
 	++stack->head;
 }
 
 
-void init_open_port(open_ports* stack){
+void init_open_port(port_stack* stack){
 	int i;
 	__u16 port = 32768;
 	stack->head = 0;
