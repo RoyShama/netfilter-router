@@ -1,6 +1,6 @@
 ccflags-y := -o3 
-router2-objs :=	router.o
-obj-m :=	router2.o
+router-objs :=	router.o ./utils/port_stack.o
+obj-m :=	router.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

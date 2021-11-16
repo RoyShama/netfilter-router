@@ -15,6 +15,7 @@
 #include <net/udp.h>
 #include <linux/delay.h>
 #include <linux/kthread.h>
+
 #define FALSE 0
 #define TRUE !FALSE
 #define swap_endian(num) ((num>>24)&0xff) | ((num<<8)&0xff0000) |((num>>8)&0xff00) | ((num<<24)&0xff000000)
@@ -32,15 +33,5 @@ typedef struct Routing{
 	__u16 original_source; /* the port of the computer in the private network*/
 	int connection_allive; /* was the connection was in use recently?*/
 }routing;
-	
-// TODO: make the stack size 2^16
-/**
- * stack of ports, used to track the server's ports
- **/
-typedef struct PortStack{
-	__u16 port_arr[32768]; /* the ports represented by theyr addres*/
-	int head;              /* the head of the stack*/
-}port_stack;
-
 
 #endif
