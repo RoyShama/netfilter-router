@@ -1,5 +1,6 @@
 #include "router.h"
 #include "utils/port_stack.h"
+#include "utils/routing.h"
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -8,14 +9,6 @@ static struct nf_hook_ops nfho_post_routing;
 static struct task_struct *kthread;
 routing udp_arr[65536], tcp_arr[65536];
 port_stack udp, tcp, udp_in_use, tcp_in_use, tem_udp, tem_tcp;
-
-void init_routing(routing *r)
-{
-	r->user_ip = 0;
-	r->dst_ip = 0;
-	r->original_source = 0;
-	r->connection_allive = FALSE;
-}
 
 void reset_arr(void)
 {
@@ -231,7 +224,7 @@ void modify_packet_post_tcp(struct sk_buff *sock_buff)
 	m_port = find_original_source_tcp(tcph->source, iph->daddr);
 	iph->saddr = PUBLIC_IP;
 	tcph->source = m_port;
-	tcp_arr[m_port].connection_allive = TRUE;
+	tcp_arr[m_port].connection_alive = TRUE;
 }
 
 void modify_packet_post_udp(struct sk_buff *sock_buff)
@@ -244,7 +237,7 @@ void modify_packet_post_udp(struct sk_buff *sock_buff)
 	m_port = find_original_source_udp(udph->source, iph->daddr);
 	iph->saddr = PUBLIC_IP;
 	udph->source = m_port;
-	udp_arr[m_port].connection_allive = TRUE;
+	udp_arr[m_port].connection_alive = TRUE;
 }
 
 unsigned int post_routing_hook_func(void *priv, struct sk_buff *sock_buff, const struct nf_hook_state *state)
@@ -336,7 +329,7 @@ void modify_packet_pre_tcp(struct sk_buff *sock_buff)
 	tcph = tcp_hdr(sock_buff);
 	iph = (struct iphdr *)skb_network_header(sock_buff);
 	iph->daddr = tcp_arr[tcph->dest].user_ip;
-	tcp_arr[tcph->dest].connection_allive = TRUE;
+	tcp_arr[tcph->dest].connection_alive = TRUE;
 	tcph->dest = tcp_arr[tcph->dest].original_source;
 }
 
@@ -347,7 +340,7 @@ void modify_packet_pre_udp(struct sk_buff *sock_buff)
 	udph = udp_hdr(sock_buff);
 	iph = (struct iphdr *)skb_network_header(sock_buff);
 	iph->daddr = udp_arr[udph->dest].user_ip;
-	udp_arr[udph->dest].connection_allive = TRUE;
+	udp_arr[udph->dest].connection_alive = TRUE;
 	udph->dest = udp_arr[udph->dest].original_source;
 }
 
@@ -391,9 +384,9 @@ void free_ports(void)
 	tem_port = pop(&udp_in_use);
 	while (tem_port != -1)
 	{
-		if (udp_arr[tem_port].connection_allive)
+		if (udp_arr[tem_port].connection_alive)
 		{
-			udp_arr[tem_port].connection_allive = FALSE;
+			udp_arr[tem_port].connection_alive = FALSE;
 			push(&tem_udp, tem_port);
 		}
 		else
@@ -406,9 +399,9 @@ void free_ports(void)
 	tem_port = pop(&tcp_in_use);
 	while (tem_port != -1)
 	{
-		if (tcp_arr[tem_port].connection_allive)
+		if (tcp_arr[tem_port].connection_alive)
 		{
-			tcp_arr[tem_port].connection_allive = FALSE;
+			tcp_arr[tem_port].connection_alive = FALSE;
 			push(&tem_tcp, tem_port);
 		}
 		else

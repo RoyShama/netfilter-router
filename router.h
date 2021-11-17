@@ -22,16 +22,4 @@
 // TODO: make public ip dynamic
 #define PUBLIC_IP ((__u32)swap_endian(2886994434))
 
-// TODO: move from three tuple to four tuple
-/**
- * represent tcp/udp connection between computers
- **/
-typedef struct Routing
-{
-	__u32 user_ip;		   /* the ip addres of the computer in the private network*/
-	__u32 dst_ip;		   /* the ip addres of the computer in the www network*/
-	__u16 original_source; /* the port of the computer in the private network*/
-	int connection_allive; /* was the connection was in use recently?*/
-} routing;
-
 #endif
