@@ -8,7 +8,6 @@ static struct nf_hook_ops nfho_post_routing;
 static struct task_struct *kthread;
 routing udp_arr[65536], tcp_arr[65536];
 port_stack udp, tcp, udp_in_use, tcp_in_use, tem_udp, tem_tcp;
-;
 
 void init_routing(routing *r)
 {
