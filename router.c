@@ -1,6 +1,7 @@
 #include "router.h"
 #include "utils/port_stack.h"
 #include "utils/routing.h"
+#include "utils/ip.h"
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -18,17 +19,6 @@ void reset_arr(void)
 		init_routing(&udp_arr[i]);
 		init_routing(&tcp_arr[i]);
 	}
-}
-
-void print_ip(__u32 ip)
-{
-	unsigned char bytes[4];
-	bytes[0] = ip & 0xFF;
-	bytes[1] = (ip >> 8) & 0xFF;
-	bytes[2] = (ip >> 16) & 0xFF;
-	bytes[3] = (ip >> 24) & 0xFF;
-	printk(KERN_INFO "%d.%d.%d.%d\n",
-		   bytes[0], bytes[1], bytes[2], bytes[3]);
 }
 
 int find_original_source_udp(__u16 port, __u32 ip)
@@ -57,69 +47,6 @@ int find_original_source_tcp(__u16 port, __u32 ip)
 		}
 	}
 	return 0;
-}
-
-void update_checksum(struct sk_buff *skb)
-{
-	struct iphdr *ip_header;
-	ip_header = ip_hdr(skb);
-	skb->ip_summed = CHECKSUM_NONE;
-	skb->csum_valid = 0;
-	ip_header->check = 0;
-	ip_header->check = ip_fast_csum((u8 *)ip_header, ip_header->ihl);
-	if ((ip_header->protocol == IPPROTO_TCP) || (ip_header->protocol == IPPROTO_UDP))
-	{
-		if (skb_is_nonlinear(skb))
-		{
-			skb_linearize(skb);
-		}
-		if (ip_header->protocol == IPPROTO_TCP)
-		{
-			struct tcphdr *tcpHdr;
-			unsigned int tcplen;
-			tcpHdr = tcp_hdr(skb);
-			skb->csum = 0;
-			tcplen = ntohs(ip_header->tot_len) - ip_header->ihl * 4;
-			tcpHdr->check = 0;
-			tcpHdr->check = tcp_v4_check(
-				tcplen,
-				ip_header->saddr,
-				ip_header->daddr,
-				csum_partial((char *)tcpHdr, tcplen, 0));
-		}
-		else if (ip_header->protocol == IPPROTO_UDP)
-		{
-			struct udphdr *udpHdr;
-			unsigned int udplen;
-			udpHdr = udp_hdr(skb);
-			skb->csum = 0;
-			udplen = ntohs(ip_header->tot_len) - ip_header->ihl * 4;
-			udpHdr->check = 0;
-			udpHdr->check = udp_v4_check(udplen, ip_header->saddr,
-										 ip_header->daddr,
-										 csum_partial((char *)udpHdr,
-													  udplen, 0));
-		}
-	}
-}
-
-int is_ip(struct sk_buff *sock_buff)
-{
-	struct iphdr *iph;
-	if (!sock_buff)
-	{
-		return FALSE;
-	}
-	iph = (struct iphdr *)skb_network_header(sock_buff);
-	if (!iph)
-	{
-		return FALSE;
-	}
-	if (iph->protocol == IPPROTO_ICMP)
-	{
-		return FALSE;
-	}
-	return TRUE;
 }
 
 int connection_exist_post_tcp(struct sk_buff *sock_buff)
