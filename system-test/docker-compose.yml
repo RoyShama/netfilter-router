@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  server:
+    build: server
+    networks:
+      servers:
+          ipv4_address: 100.0.0.2
+
+  client:
+    build: client
+    networks:
+      clients:
+        ipv4_address: 193.168.0.2
+
+
+networks:
+  clients:
+      driver: bridge
+      ipam:
+          driver: default
+          config:
+              - subnet: "193.168.0.0/24"
+                gateway: "193.168.0.1"
+  servers:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "100.0.0.0/24"
+          gateway: "100.0.0.1"
