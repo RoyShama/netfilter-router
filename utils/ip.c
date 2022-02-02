@@ -13,7 +13,7 @@ void print_ip(__u32 ip)
     bytes[1] = (ip >> 8) & 0xFF;
     bytes[2] = (ip >> 16) & 0xFF;
     bytes[3] = (ip >> 24) & 0xFF;
-    printk(KERN_INFO "%d.%d.%d.%d\n",
+    printk(KERN_ALERT "%d.%d.%d.%d\n",
            bytes[0], bytes[1], bytes[2], bytes[3]);
 }
 
