@@ -148,10 +148,13 @@ void modify_packet_post_tcp(struct sk_buff *sock_buff)
 	int m_port;
 	tcph = tcp_hdr(sock_buff);
 	iph = (struct iphdr *)skb_network_header(sock_buff);
+	print_ip(iph->saddr);
 	m_port = find_original_source_tcp(tcph->source, iph->daddr);
 	iph->saddr = PUBLIC_IP;
 	tcph->source = m_port;
 	tcp_arr[m_port].connection_alive = TRUE;
+	print_ip(iph->saddr);
+
 }
 
 void modify_packet_post_udp(struct sk_buff *sock_buff)
