@@ -1,6 +1,8 @@
 #include "../router.h"
 #include "ip.h"
 
+MODULE_LICENSE("Dual BSD/GPL");
+
 /**
  * print an ip addres in a human readable way
  * 

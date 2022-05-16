@@ -397,6 +397,7 @@ static int __init initialize(void)
 
 	kthread = kthread_create(free_ports_forever, NULL, "router_kthread");
 	wake_up_process(kthread);
+    printk("started router");
 
 	return 0;
 }
@@ -406,6 +407,7 @@ static void __exit teardown(void)
 	nf_unregister_net_hook(&init_net, &nfho_pre_routing);
 	nf_unregister_net_hook(&init_net, &nfho_post_routing);
 	kthread_stop(kthread);
+    printk("stopped router");
 }
 
 module_init(initialize);
