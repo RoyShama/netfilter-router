@@ -1,7 +1,6 @@
 #include "../router.h"
 #include "routing.h"
 
-MODULE_LICENSE("Dual BSD/GPL");
 
 /**
  * fill a routing struct with default values
