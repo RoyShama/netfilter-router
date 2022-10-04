@@ -1,5 +1,5 @@
 ccflags-y := -o3 
-router-objs :=	router.o ./utils/port_stack.o ./utils/routing.o ./utils/ip.o
+router-objs :=	 ./src/utils/port_stack.o ./src/utils/routing.o ./src/utils/ip.o ./src/router.o
 obj-m :=	router.o
 
 all:
